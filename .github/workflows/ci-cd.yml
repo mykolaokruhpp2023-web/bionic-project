@@ -7,9 +7,24 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./bionic-tech-store[cite: 4]
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4[cite: 4]
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20[cite: 4]
+
       - name: Install dependencies
-        run: npm install
+        run: npm install[cite: 4]
+
+      - name: Build project
+        run: npm run build[cite: 4]
