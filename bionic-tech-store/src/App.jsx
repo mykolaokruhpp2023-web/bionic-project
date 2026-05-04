@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react'; // Додаємо цей рядок на початок файлу
 import { products } from './data/products';
 import './App.css';
 
@@ -45,7 +45,8 @@ function App() {
               Ми розробляємо апаратні та програмні рішення, що допомагають людям з вадами слуху 
               вільно та безпечно почуватися в сучасному світі. Наша мета — інтеграція кібернетичних 
               технологій у повсякденне життя для подолання фізичних бар'єрів.
-            </p>
+                      </p>
+                      <p>Статус системи: {import.meta.env.VITE_APP_STATUS}</p>
             
             <h2>Наша команда</h2>
             <div className="team-grid">

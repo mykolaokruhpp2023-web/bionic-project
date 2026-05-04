@@ -1,0 +1,15 @@
+name: Bionic Tech Store CI/CD
+
+on:
+  push:
+    branches: [ "main", "feature/sensors-desc" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm install
