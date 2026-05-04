@@ -12,19 +12,19 @@ jobs:
     
     defaults:
       run:
-        working-directory: ./bionic-tech-store[cite: 4]
+        working-directory: ./bionic-tech-store
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4[cite: 4]
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20[cite: 4]
+          node-version: 20
 
       - name: Install dependencies
-        run: npm install[cite: 4]
+        run: npm install
 
       - name: Build project
-        run: npm run build[cite: 4]
+        run: npm run build
