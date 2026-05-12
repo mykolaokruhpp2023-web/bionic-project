@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client' // Важливо: саме так
 import App from './App.jsx'
 import './index.css'
 import * as Sentry from "@sentry/react";
+import posthog from 'posthog-js';
 
 // Ініціалізація Sentry для Кроків 4 та 5 (Performance & Error Tracking)
 Sentry.init({
@@ -28,3 +29,8 @@ if (container) {
         </React.StrictMode>
     );
 }
+
+posthog.init('phc_yyMGm2TfiK47WRfH9CtjbdPxAbe5AaQRCZjypPLpMqBP', {
+    api_host: 'https://eu.i.posthog.com', // або 'https://app.posthog.com', залежно від твого регіону
+    person_profiles: 'identified_only'
+});

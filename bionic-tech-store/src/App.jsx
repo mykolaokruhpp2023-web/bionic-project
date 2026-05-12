@@ -5,6 +5,7 @@ import posthog from 'posthog-js';
 import * as Sentry from "@sentry/react";
 
 function App() {
+    const [showPromo, setShowPromo] = useState(false);
     const [activeTab, setActiveTab] = useState('products');
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [cart, setCart] = useState([]);
@@ -15,6 +16,14 @@ function App() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
+    useEffect(() => {
+        // Чекаємо, поки PostHog завантажить прапорці
+        posthog.onFeatureFlags(() => {
+            if (posthog.isFeatureEnabled('promotion-flag')) {
+                setShowPromo(true);
+            }
+        });
+    }, []);
     const handleTabChange = (tab) => {
         setActiveTab(tab);
         setSelectedProduct(null);
@@ -126,28 +135,27 @@ function App() {
 
                 {/* КАТАЛОГ ТОВАРІВ */}
                 {activeTab === 'products' && !selectedProduct && (
-                    <div className="products-section fade-in">
-                        <h1 className="page-title">Наші розробки</h1>
-                        <div className="product-grid">
+                    <div className="products-container">
+
+                        {/* КРОК 3: ВСТАВЛЯТИ СЮДИ */}
+                        {showPromo && (
+                            <div className="promo-banner fade-in" style={{
+                                background: 'linear-gradient(90deg, #1e293b, #3b82f6)',
+                                padding: '20px',
+                                borderRadius: '12px',
+                                marginBottom: '20px',
+                                border: '1px solid #38bdf8',
+                                color: 'white'
+                            }}>
+                                <h2 style={{ margin: 0 }}>🔥 Акційна пропозиція на Bionic Glass!</h2>
+                                <p>Тільки для учасників тестування — знижка 15% на першу партію окулярів.</p>
+                            </div>
+                        )}
+
+                        <div className="products-grid fade-in">
                             {products.map(product => (
                                 <div key={product.id} className="product-card">
-                                    <div className="product-img-container" onClick={() => setSelectedProduct(product)}>
-                                        {product.id === 1 && posthog.isFeatureEnabled('special-offer-bionic') && (
-                                            <div className="promo-badge">АКЦІЯ</div>
-                                        )}
-                                        <img src={product.image} alt={product.name} className="product-img" />
-                                    </div>
-                                    <div className="product-info">
-                                        <h3>{product.name}</h3>
-                                        <div className="price-tag">{product.price} грн</div>
-                                        <button
-                                            className={`action-btn ${!user ? 'is-locked' : 'is-active'}`}
-                                            onClick={() => addToCart(product)}
-                                            disabled={!user}
-                                        >
-                                            {user ? 'В кошик' : 'Увійдіть'}
-                                        </button>
-                                    </div>
+                                    {/* ... твій існуючий код карток ... */}
                                 </div>
                             ))}
                         </div>
