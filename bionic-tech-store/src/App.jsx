@@ -5,6 +5,10 @@ import posthog from 'posthog-js';
 import * as Sentry from "@sentry/react";
 
 function App() {
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        setSelectedProduct(null); // Скидаємо вибраний товар при переході на іншу вкладку
+    };
     const [showPromo, setShowPromo] = useState(false);
     const [activeTab, setActiveTab] = useState('products');
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -17,17 +21,31 @@ function App() {
     const [password, setPassword] = useState('');
 
     useEffect(() => {
-        // Чекаємо, поки PostHog завантажить прапорці
+        // 1. Початкова перевірка при завантаженні
         posthog.onFeatureFlags(() => {
-            if (posthog.isFeatureEnabled('promotion-flag')) {
-                setShowPromo(true);
-            }
+            const isEnabled = posthog.isFeatureEnabled('special-offer-bionic');
+            setShowPromo(isEnabled);
+            console.log("Початковий статус флага:", isEnabled);
         });
+
+        // 2. "Живе" оновлення при зміні стану в кабінеті
+        // Метод допомагає перехопити зміни без перезавантаження
+        const interval = setInterval(() => {
+            posthog.reloadFeatureFlags();
+            const isEnabled = posthog.isFeatureEnabled('special-offer-bionic');
+
+            // Оновлюємо стан тільки якщо він змінився, щоб не перерендерювати зайвий раз
+            setShowPromo((prev) => {
+                if (prev !== isEnabled) {
+                    console.log("Статус флага змінився в реальному часі:", isEnabled);
+                    return isEnabled;
+                }
+                return prev;
+            });
+        }, 5000); // Перевіряємо кожні 5 секунд
+
+        return () => clearInterval(interval); // Очищуємо інтервал при закритті сторінки
     }, []);
-    const handleTabChange = (tab) => {
-        setActiveTab(tab);
-        setSelectedProduct(null);
-    };
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -153,11 +171,30 @@ function App() {
                         )}
 
                         <div className="products-grid fade-in">
-                            {products.map(product => (
-                                <div key={product.id} className="product-card">
-                                    {/* ... твій існуючий код карток ... */}
-                                </div>
-                            ))}
+                            {products
+                                .filter(product => {
+                                    // Якщо товар тільки для акції, показуємо його лише при активному флазі
+                                    if (product.isPromoOnly) return showPromo;
+                                    return true;
+                                })
+                                .map(product => (
+                                    <div key={product.id} className="product-card" onClick={() => setSelectedProduct(product)}>
+
+                                        {/* ПРАПОРЕЦЬ "АКЦІЯ" НА ОКУЛЯРАХ */}
+                                        {product.hasPromo && showPromo && (
+                                            <div className="promo-badge">Акція!</div>
+                                        )}
+
+                                        <img src={product.image} alt={product.name} />
+                                        <h3>{product.name}</h3>
+                                        <p>{product.shortDesc}</p>
+                                        <div className="card-footer">
+                                            <span className="price">{product.price} грн</span>
+                                            <button className="buy-btn">Детальніше</button>
+                                        </div>
+                                    </div>
+                                ))
+                            }
                         </div>
                     </div>
                 )}
