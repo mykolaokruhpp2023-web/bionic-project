@@ -214,9 +214,13 @@ function App() {
                                 <button
                                     className={`huge-order-btn ${!user ? 'is-locked' : 'is-active'}`}
                                     disabled={!user}
-                                    onClick={() => alert('Замовлення прийнято!')}
+                                    onClick={() => {
+                                        addToCart(selectedProduct); // Додаємо в кошик
+                                        alert('Товар додано до кошика!');
+                                        setSelectedProduct(null); // Повертаємо користувача в каталог (за бажанням)
+                                    }}
                                 >
-                                    {user ? 'Оформити замовлення' : 'Функція заблокована'}
+                                    {user ? 'Оформити замовлення' : 'Увійдіть, щоб замовити'}
                                 </button>
                             </div>
                         </div>
