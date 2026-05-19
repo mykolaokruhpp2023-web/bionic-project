@@ -17,8 +17,7 @@ Sentry.init({
 
 // Ініціалізація PostHog
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-    // Вказуємо внутрішній шлях, який Vercel перенаправить на PostHog
-    api_host: '/ingest',
+    api_host: '/ingest', // Обов'язково саме так
     person_profiles: 'identified_only'
 });
 
