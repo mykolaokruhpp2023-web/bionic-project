@@ -1,0 +1,30 @@
+name: Bionic Tech Store CI/CD
+
+on:
+  push:
+    branches: [ "main", "feature/sensors-desc" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./bionic-tech-store
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build

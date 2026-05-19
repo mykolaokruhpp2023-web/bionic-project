@@ -1,115 +1,234 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react'; // ОБОВ'ЯЗКОВО ОБИДВА
 import { products } from './data/products';
 import './App.css';
+import posthog from 'posthog-js';
+import * as Sentry from "@sentry/react";
 
 function App() {
-  // Стани для керування тим, що зараз бачить користувач
-  const [activeTab, setActiveTab] = useState('products'); // 'products' або 'about'
-  const [selectedProduct, setSelectedProduct] = useState(null); // null або об'єкт товару
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        setSelectedProduct(null); // Скидаємо вибраний товар при переході на іншу вкладку
+    };
+    const [showPromo, setShowPromo] = useState(false);
+    const [activeTab, setActiveTab] = useState('products');
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [cart, setCart] = useState([]);
 
-  // Функція для скидання вибраного товару при зміні вкладки
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    setSelectedProduct(null);
-  };
+    // Стан для авторизації
+    const [user, setUser] = useState(null);
+    const [showModal, setShowModal] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
-  return (
-    <div className="app-container">
-      {/* Навігаційна панель */}
-      <nav className="navbar">
-        <div className="logo">M-Bionica</div>
-        <div className="nav-links">
-          <button 
-            className={activeTab === 'about' ? 'nav-btn active' : 'nav-btn'} 
-            onClick={() => handleTabChange('about')}
-          >
-            Про компанію
-          </button>
-          <button 
-            className={activeTab === 'products' ? 'nav-btn active' : 'nav-btn'} 
-            onClick={() => handleTabChange('products')}
-          >
-            Каталог товарів
-          </button>
-        </div>
-      </nav>
+    useEffect(() => {
+        // 1. Початкова перевірка при завантаженні
+        posthog.onFeatureFlags(() => {
+            const isEnabled = posthog.isFeatureEnabled('special-offer-bionic');
+            setShowPromo(isEnabled);
+            console.log("Початковий статус флага:", isEnabled);
+        });
 
-      {/* Основний контент */}
-      <main className="main-content">
-        
-        {/* ВКЛАДКА: ПРО КОМПАНІЮ */}
-        {activeTab === 'about' && !selectedProduct && (
-          <div className="about-section fade-in">
-            <h1>Розширюємо межі можливого</h1>
-            <p className="mission-text">
-              Ми розробляємо апаратні та програмні рішення, що допомагають людям з вадами слуху 
-              вільно та безпечно почуватися в сучасному світі. Наша мета — інтеграція кібернетичних 
-              технологій у повсякденне життя для подолання фізичних бар'єрів.
-            </p>
-            
-            <h2>Наша команда</h2>
-            <div className="team-grid">
-              <div className="team-card">
-                <h3>Микола Округ</h3>
-                <p className="role">Hardware Developer & Project Manager</p>
-                <p>Проєктування систем, управління розробкою та архітектура пристроїв.</p>
-              </div>
-              <div className="team-card">
-                <h3>Данило Юнак</h3>
-                <p className="role">Full-Stack Developer & UI/UX</p>
-                <p>Програмна реалізація, створення інтерфейсів та користувацького досвіду.</p>
-              </div>
-              <div className="team-card">
-                <h3>Ігор Пашко</h3>
-                <p className="role">QA Testing & Marketing</p>
-                <p>Тестування надійності, просування продукту та стратегія виходу на ринок.</p>
-              </div>
-            </div>
-          </div>
-        )}
+        // 2. "Живе" оновлення при зміні стану в кабінеті
+        // Метод допомагає перехопити зміни без перезавантаження
+        const interval = setInterval(() => {
+            posthog.reloadFeatureFlags();
+            const isEnabled = posthog.isFeatureEnabled('special-offer-bionic');
 
-        {/* ВКЛАДКА: КАТАЛОГ ТОВАРІВ */}
-        {activeTab === 'products' && !selectedProduct && (
-          <div className="products-section fade-in">
-            <h1 className="page-title">Наші розробки</h1>
-            <div className="product-grid">
-              {products.map(product => (
-                <div key={product.id} className="product-card" onClick={() => setSelectedProduct(product)}>
-                  <img src={product.image} alt={product.name} className="product-img" />
-                  <div className="product-info">
-                    <h2>{product.name}</h2>
-                    <p className="short-desc">{product.shortDesc}</p>
-                    <div className="price-tag">{product.price} грн</div>
-                    <button className="details-btn">Детальніше</button>
-                  </div>
+            // Оновлюємо стан тільки якщо він змінився, щоб не перерендерювати зайвий раз
+            setShowPromo((prev) => {
+                if (prev !== isEnabled) {
+                    console.log("Статус флага змінився в реальному часі:", isEnabled);
+                    return isEnabled;
+                }
+                return prev;
+            });
+        }, 5000); // Перевіряємо кожні 5 секунд
+
+        return () => clearInterval(interval); // Очищуємо інтервал при закритті сторінки
+    }, []);
+
+    const handleLogin = (e) => {
+        e.preventDefault();
+        if (email.length > 3 && password.length > 3) {
+            const userData = {
+                id: 'user_mykola_99',
+                username: 'Okruh_Mykola',
+                email: email
+            };
+            setUser(userData);
+            setShowModal(false);
+
+            posthog.identify(userData.id, { email: userData.email, name: userData.username });
+            Sentry.setUser({ id: userData.id, email: userData.email, username: userData.username });
+            posthog.capture('user_login_success');
+        } else {
+            alert("Введіть логін та пароль");
+        }
+    };
+    useEffect(() => {
+        // Новий спосіб для SDK v8
+        return Sentry.startSpan({ name: "Load Products Tab" }, () => {
+            // Тут імітація логіки завантаження
+            console.log("Performance tracing active...");
+        });
+    }, [activeTab]); // Спрацьовує при зміні вкладок
+
+    const handleLogout = () => {
+        setUser(null);
+        setEmail('');
+        setPassword('');
+        posthog.reset();
+        Sentry.setUser(null);
+    };
+
+    const addToCart = (product) => {
+        if (!user) return;
+        setCart(prevCart => [...prevCart, product]);
+        posthog.capture('added_to_cart', { product_name: product.name });
+    };
+
+    const simulateHardwareError = () => {
+        throw new Error("Bionic Hardware Sync Failure: Connection to Sound-to-Light Hub lost");
+    };
+
+    return (
+        <div className="app-container">
+            {/* МОДАЛЬНЕ ВІКНО */}
+            {showModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <button className="close-modal" onClick={() => setShowModal(false)}>×</button>
+                        <h2>Вхід у систему M-Bionica</h2>
+                        <form onSubmit={handleLogin} className="modal-form">
+                            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                            <input type="password" placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                            <button type="submit" className="submit-login-btn">Увійти</button>
+                        </form>
+                    </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* СТОРІНКА: ДЕТАЛІ ТОВАРУ */}
-        {selectedProduct && (
-          <div className="product-details fade-in">
-            <button className="back-btn" onClick={() => setSelectedProduct(null)}>
-              ← Повернутися до каталогу
-            </button>
-            <div className="details-layout">
-              <img src={selectedProduct.image} alt={selectedProduct.name} className="details-img" />
-              <div className="details-info">
-                <h1>{selectedProduct.name}</h1>
-                <p className="price-large">{selectedProduct.price} грн</p>
-                <div className="divider"></div>
-                <p className="full-desc">{selectedProduct.fullDesc}</p>
-                <button className="buy-btn-large">Оформити передзамовлення</button>
-              </div>
-            </div>
-          </div>
-        )}
+            <nav className="navbar">
+                <div className="logo">M-Bionica</div>
+                <div className="nav-links">
+                    <button onClick={() => handleTabChange('about')} className={activeTab === 'about' ? 'nav-btn active' : 'nav-btn'}>Про компанію</button>
+                    <button onClick={() => handleTabChange('products')} className={activeTab === 'products' ? 'nav-btn active' : 'nav-btn'}>Каталог</button>
+                    <div className="cart-counter">🛒 {cart.length}</div>
+                    {user ? (
+                        <div className="user-nav-block">
+                            <span>{user.username}</span>
+                            <button onClick={handleLogout} className="auth-trigger-btn logout">Вийти</button>
+                        </div>
+                    ) : (
+                        <button onClick={() => setShowModal(true)} className="auth-trigger-btn login">Увійти</button>
+                    )}
+                </div>
+            </nav>
 
-      </main>
-    </div>
-  );
+            <main className="main-content">
+                {/* ВКЛАДКА ПРО КОМПАНІЮ — ПОВЕРНУТО */}
+                {activeTab === 'about' && (
+                    <div className="about-section fade-in">
+                        <h1>Розширюємо межі можливого</h1>
+                        <p className="mission-text">Ми розробляємо апаратні та програмні рішення для кібернетичного покращення людського потенціалу.</p>
+
+                        <h2>Наша команда</h2>
+                        <div className="team-grid">
+                            <div className="team-card">
+                                <h3>Микола Округ</h3>
+                                <p className="role">Hardware Developer & PM</p>
+                                <button className="error-btn" onClick={simulateHardwareError}>Тест збою пристрою</button>
+                            </div>
+                            <div className="team-card">
+                                <h3>Данило Юнак</h3>
+                                <p className="role">Full-Stack Developer</p>
+                            </div>
+                            <div className="team-card">
+                                <h3>Ігор Пашко</h3>
+                                <p className="role">QA & Marketing</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* КАТАЛОГ ТОВАРІВ */}
+                {activeTab === 'products' && !selectedProduct && (
+                    <div className="products-container">
+
+                        {/* КРОК 3: ВСТАВЛЯТИ СЮДИ */}
+                        {showPromo && (
+                            <div className="promo-banner fade-in" style={{
+                                background: 'linear-gradient(90deg, #1e293b, #3b82f6)',
+                                padding: '20px',
+                                borderRadius: '12px',
+                                marginBottom: '20px',
+                                border: '1px solid #38bdf8',
+                                color: 'white'
+                            }}>
+                                <h2 style={{ margin: 0 }}>🔥 Акційна пропозиція на Bionic Glass!</h2>
+                                <p>Тільки для учасників тестування — знижка 15% на першу партію окулярів.</p>
+                            </div>
+                        )}
+
+                        <div className="products-grid fade-in">
+                            {products
+                                .filter(product => {
+                                    // Якщо товар тільки для акції, показуємо його лише при активному флазі
+                                    if (product.isPromoOnly) return showPromo;
+                                    return true;
+                                })
+                                .map(product => (
+                                    <div key={product.id} className="product-card" onClick={() => setSelectedProduct(product)}>
+
+                                        {/* ПРАПОРЕЦЬ "АКЦІЯ" НА ОКУЛЯРАХ */}
+                                        {product.hasPromo && showPromo && (
+                                            <div className="promo-badge">Акція!</div>
+                                        )}
+
+                                        <img src={product.image} alt={product.name} />
+                                        <h3>{product.name}</h3>
+                                        <p>{product.shortDesc}</p>
+                                        <div className="card-footer">
+                                            <span className="price">{product.price} грн</span>
+                                            <button className="buy-btn">Детальніше</button>
+                                        </div>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+                )}
+
+                {/* ДЕТАЛІ ТОВАРУ */}
+                {selectedProduct && (
+                    <div className="details-view fade-in">
+                        <button className="back-link" onClick={() => setSelectedProduct(null)}>← Назад</button>
+                        <div className="details-layout">
+                            <div className="details-img-wrapper">
+                                <img src={selectedProduct.image} alt={selectedProduct.name} />
+                            </div>
+                            <div className="details-info">
+                                <h1>{selectedProduct.name}</h1>
+                                <p className="price-large">{selectedProduct.price} грн</p>
+                                <p className="full-desc">{selectedProduct.fullDesc}</p>
+                                <button
+                                    className={`huge-order-btn ${!user ? 'is-locked' : 'is-active'}`}
+                                    disabled={!user}
+                                    onClick={() => {
+                                        addToCart(selectedProduct); // Додаємо в кошик
+                                        alert('Товар додано до кошика!');
+                                        setSelectedProduct(null); // Повертаємо користувача в каталог (за бажанням)
+                                    }}
+                                >
+                                    {user ? 'Оформити замовлення' : 'Увійдіть, щоб замовити'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </main>
+        </div>
+    );
 }
 
 export default App;

@@ -1,3 +1,4 @@
+[![Bionic Tech Store CI/CD](https://github.com/mykolaokruhpp2023-web/bionic-project/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/mykolaokruhpp2023-web/bionic-project/actions/workflows/ci-cd.yml)
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
