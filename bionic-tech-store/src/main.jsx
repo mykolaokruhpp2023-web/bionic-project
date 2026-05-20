@@ -15,14 +15,11 @@ Sentry.init({
     tracesSampleRate: 1.0,
 });
 
-// Ініціалізація PostHog
-// main.jsx
+// ЗМІНЮЄМО ТУТ:
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-    api_host: 'https://app.posthog.com', // Використовуйте повний домен
-    person_profiles: 'identified_only',
-    persistence: 'localStorage+cookie' // Додайте це для стабільності
+    api_host: 'https://app.posthog.com', // Прямий шлях, без '/'
+    person_profiles: 'identified_only'
 });
-
 const container = document.getElementById('root');
 
 if (container) {
