@@ -16,7 +16,7 @@ Sentry.init({
 });
 
 posthog.init('phc_yyMGm2TfiK47WRfH9CtjbdPxAbe5AaQRCZjypPLpMqBP', {
-    api_host: '/ingest',
+    api_host: '/api/ingest',
     ui_host: 'https://eu.posthog.com',
 })
 const container = document.getElementById('root');

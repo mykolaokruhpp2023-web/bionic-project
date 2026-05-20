@@ -1,40 +1,37 @@
-export default async function handler(req, res) {
-  // Витягуємо все після /api/ingest (включно з query string)
-  const afterIngest = req.url.replace(/^\/api\/ingest/, '') || '/';
-  const url = `https://eu.i.posthog.com${afterIngest}`;
+export const config = {  
+  api: { bodyParser: false },  
+};
 
-  // Копіюємо заголовки
-  const headers = {};
-  for (const [key, value] of Object.entries(req.headers)) {
-    if (key !== 'host' && key !== 'connection') {
-      headers[key] = value;
-    }
-  }
-  headers['host'] = 'eu.i.posthog.com';
-
-  // Читаємо тіло запиту (для POST)
-  let body = undefined;
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    body = await new Promise((resolve) => {
-      const chunks = [];
-      req.on('data', chunk => chunks.push(chunk));
-      req.on('end', () => resolve(Buffer.concat(chunks)));
-    });
-  }
-
-  const response = await fetch(url, {
-    method: req.method,
-    headers,
-    body,
-  });
-
-  // Передаємо заголовки відповіді (без тих що ламають)
-  response.headers.forEach((value, key) => {
-    if (key !== 'content-encoding' && key !== 'transfer-encoding') {
-      res.setHeader(key, value);
-    }
-  });
-
-  const data = await response.arrayBuffer();
-  res.status(response.status).send(Buffer.from(data));
+async function getBody(req) {  
+  const chunks = [];  
+  for await (const chunk of req) {  
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);  
+  }  
+  return Buffer.concat(chunks);  
 }
+
+export default async function handler(req, res) {  
+  const { path } = req.query;  
+  const pathStr = Array.isArray(path) ? path.join('/') : path || '';  
+  const queryString = req.url.includes('?')  
+    ? req.url.substring(req.url.indexOf('?'))  
+    : '';
+
+  const url = `https://eu.i.posthog.com/${pathStr}${queryString}`;
+
+  const fetchOptions = {  
+    method: req.method,  
+    headers: {  
+      'content-type': req.headers['content-type'] || 'text/plain',  
+      'user-agent': req.headers['user-agent'] || '',  
+    },  
+  };
+
+  if (req.method !== 'GET' && req.method !== 'HEAD') {  
+    fetchOptions.body = await getBody(req);  
+  }
+
+  const response = await fetch(url, fetchOptions);  
+  const text = await response.text();  
+  res.status(response.status).send(text);  
+}  
