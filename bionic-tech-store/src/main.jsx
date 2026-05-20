@@ -17,7 +17,7 @@ Sentry.init({
 
 // Ініціалізація PostHog
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-    api_host: '/ingest', // Обов'язково саме так
+    api_host: 'https://app.posthog.comest', // Обов'язково саме так
     person_profiles: 'identified_only'
 });
 
