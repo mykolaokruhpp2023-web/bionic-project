@@ -15,11 +15,10 @@ Sentry.init({
     tracesSampleRate: 1.0,
 });
 
-// ЗМІНЮЄМО ТУТ:
-posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-    api_host: 'https://app.posthog.com', // Прямий шлях, без '/'
-    person_profiles: 'identified_only'
-});
+posthog.init('phc_yyMGm2TfiK47WRfH9CtjbdPxAbe5AaQRCZjypPLpMqBP', {
+    api_host: 'https://eu.i.posthog.com',
+    defaults: '2026-01-30'
+})
 const container = document.getElementById('root');
 
 if (container) {
